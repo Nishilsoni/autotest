@@ -244,7 +244,7 @@ This opens an interactive page in your browser at `http://localhost:9323`. Click
 - Embedded video playback of the run
 - On failure only: screenshot at the point of failure and a downloadable trace (`npx playwright show-trace <path>`) for step-by-step replay with network and DOM inspection
 
-The report is self-contained under `playwright-report/` — it can be zipped and shared, or attached to a CI artifact, without re-running anything.
+The report is self-contained under `playwright-report/` — it can be zipped and shared, or attached to a CI artifact, without re-running anything. A pre-generated report from a passing run (including the embedded video) is committed to this repository at [`playwright-report/index.html`](playwright-report/index.html) so it's viewable without running the suite locally first.
 
 ### Video Recording
 
