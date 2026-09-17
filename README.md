@@ -47,8 +47,6 @@ This framework is designed according to industry best practices for scalability,
 │   └── profile-picture.jpg        # Fixture image for profile picture upload
 ├── config/
 │   └── environment.ts             # Strongly-typed environment configuration & validation
-├── demo/
-│   └── employee-lifecycle-test-run.webm  # Recording of a full passing run (viewable on GitHub)
 ├── fixtures/
 │   ├── employeeData.json          # Pre-configured baseline employee fixtures
 │   └── testData.ts                # Test data provider & collision-free factory
@@ -64,6 +62,8 @@ This framework is designed according to industry best practices for scalability,
 │   ├── constants.ts               # App routes, timeouts, dropdown options & assertions messages
 │   ├── dataGenerator.ts           # Collision-resistant test data generator
 │   └── logger.ts                  # Standardized structured console logger
+├── video/
+│   └── assignment.mov             # Screen-recorded demo of a full passing run
 ├── .env                           # Local environment secrets (not committed to public repos)
 ├── .env.example                   # Template for environment configuration
 ├── .prettierrc                    # Prettier formatting configuration
@@ -257,7 +257,7 @@ Video capture is configured to record every test execution (`video: 'on'` in `pl
 
 ### Demo Video
 
-A recording of a full passing run is committed at [`demo/employee-lifecycle-test-run.webm`](demo/employee-lifecycle-test-run.webm) — open it on GitHub to play it inline with the built-in video viewer, no download required.
+A screen-recorded walkthrough of a full passing run is committed at [`video/assignment.mov`](video/assignment.mov) — open it on GitHub to play it inline with the built-in video viewer, no download required.
 
 ---
 
