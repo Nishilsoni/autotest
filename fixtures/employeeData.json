@@ -1,0 +1,25 @@
+{
+  "employees": [
+    {
+      "firstName": "Alex",
+      "lastName": "Anderson",
+      "jobTitle": "Software Engineer",
+      "employmentStatus": "Full-Time Permanent",
+      "profilePicture": "assets/profile-picture.jpg"
+    },
+    {
+      "firstName": "Jordan",
+      "lastName": "Mitchell",
+      "jobTitle": "QA Lead",
+      "employmentStatus": "Full-Time Contract",
+      "profilePicture": "assets/profile-picture.jpg"
+    },
+    {
+      "firstName": "Morgan",
+      "lastName": "Parker",
+      "jobTitle": "HR Manager",
+      "employmentStatus": "Part-Time Contract",
+      "profilePicture": "assets/profile-picture.jpg"
+    }
+  ]
+}

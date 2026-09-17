@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Environment variables (contains credentials)
+.env
+
+# Test artifacts (generated dynamically)
+test-results/
+playwright-report/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# TypeScript build output
+dist/
+
+# Coverage
+coverage/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+*.tmp
+*.temp

@@ -1,0 +1,33 @@
+{
+  "name": "qa-automation-orangehrm",
+  "version": "1.0.0",
+  "description": "Production-quality QA automation framework for OrangeHRM using Playwright, TypeScript, and Page Object Model",
+  "author": "QA Automation Engineer",
+  "license": "MIT",
+  "type": "commonjs",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:report": "npx playwright show-report",
+    "lint": "npx eslint . --ext .ts",
+    "format": "npx prettier --write '**/*.{ts,json,md,yml}'",
+    "format:check": "npx prettier --check '**/*.{ts,json,md,yml}'",
+    "typecheck": "npx tsc --noEmit"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.20.3",
+    "@typescript-eslint/eslint-plugin": "^8.33.1",
+    "@typescript-eslint/parser": "^8.33.1",
+    "dotenv": "^16.5.0",
+    "eslint": "^9.28.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.70.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
