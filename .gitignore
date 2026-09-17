@@ -5,8 +5,10 @@ node_modules/
 .env
 
 # Test artifacts (generated dynamically)
+# NOTE: playwright-report/ is intentionally committed — it's the HTML report
+# + embedded video deliverable required for submission. Only test-results/
+# (raw per-run traces/screenshots, regenerated every run) stays ignored.
 test-results/
-playwright-report/
 
 # OS-specific files
 .DS_Store

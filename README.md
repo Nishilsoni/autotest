@@ -117,6 +117,23 @@ OrangeHRM Open Source Demo does not expose a public, authenticated CRUD REST API
 - The client models typed request and response interfaces for `createEmployee`, `getEmployee`, `updateEmployee`, and `deleteEmployee`.
 - Dual-layer assertions verify status codes (`201 Created`, `200 OK`, `204 No Content`, `404 Not Found`) and confirm attribute parity between the UI employee and API employee records.
 
+### ReqRes Rate Limits & the Optional API Key
+
+ReqRes's anonymous tier caps unauthenticated traffic at **40 requests/day per IP**, resetting at midnight UTC. Each full test run uses **5 requests** (`POST`, `GET`, `PUT`, `DELETE`, `GET`), so:
+
+| Scenario                           | Behavior                                                                                                                                                                                                    |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No API key set**                 | Works out of the box — up to **8 full runs/day** on the free anonymous quota. `EmployeeApiClient` also logs a warning once fewer than 10 requests remain, so you get advance notice before hitting the cap. |
+| **`REQRES_API_KEY` set in `.env`** | Requests are sent with an `x-api-key` header, raising the daily limit well beyond the anonymous tier — safe for CI, repeated demo runs, or grading re-runs the same day.                                    |
+
+To add a key: sign up for free at [app.reqres.in/sign-up](https://app.reqres.in/sign-up), copy your API key from the dashboard, and set it in `.env`:
+
+```bash
+REQRES_API_KEY=your_key_here
+```
+
+If the daily quota is ever fully exhausted (e.g. from many consecutive runs without a key), the affected API assertion fails with a clear `429` status message rather than hanging or retrying pointlessly — the client only retries when the response advertises a short `Retry-After` window; the daily cap does not, so it fails fast instead of wasting time on retries that can't succeed.
+
 ---
 
 ## Prerequisites
@@ -148,10 +165,13 @@ OrangeHRM Open Source Demo does not expose a public, authenticated CRUD REST API
    npx playwright install --with-deps chromium
    ```
 
-4. **Verify environment setup:**
+4. **Set up environment variables:**
+
    ```bash
    cp .env.example .env
    ```
+
+   The defaults already point at the public OrangeHRM demo and ReqRes, so the suite runs with **no further edits required**. Optionally add a free `REQRES_API_KEY` (see [API Integration & Hybrid Validation](#api-integration--hybrid-validation)) to raise the API rate limit.
 
 ---
 
@@ -159,25 +179,30 @@ OrangeHRM Open Source Demo does not expose a public, authenticated CRUD REST API
 
 Environment variables are loaded via `dotenv` and strongly typed via `config/environment.ts`:
 
-| Variable             | Description                          | Default Value                               |
-| -------------------- | ------------------------------------ | ------------------------------------------- |
-| `ORANGEHRM_BASE_URL` | Base URL of the OrangeHRM instance   | `https://opensource-demo.orangehrmlive.com` |
-| `ORANGEHRM_USERNAME` | Admin login username                 | `Admin`                                     |
-| `ORANGEHRM_PASSWORD` | Admin login password                 | `admin123`                                  |
-| `API_BASE_URL`       | Base URL for API validation          | `https://reqres.in/api`                     |
-| `CI`                 | Automatically set in CI environments | `false`                                     |
+| Variable             | Description                                               | Default Value                               |
+| -------------------- | --------------------------------------------------------- | ------------------------------------------- |
+| `ORANGEHRM_BASE_URL` | Base URL of the OrangeHRM instance                        | `https://opensource-demo.orangehrmlive.com` |
+| `ORANGEHRM_USERNAME` | Admin login username                                      | `Admin`                                     |
+| `ORANGEHRM_PASSWORD` | Admin login password                                      | `admin123`                                  |
+| `API_BASE_URL`       | Base URL for API validation                               | `https://reqres.in/api`                     |
+| `REQRES_API_KEY`     | Optional. Raises the ReqRes daily request cap (see above) | _(empty — anonymous tier)_                  |
+| `CI`                 | Automatically set in CI environments                      | `false`                                     |
 
 ---
 
 ## Running Tests
 
-### Run all tests in headless mode:
+### Run all tests in headless mode (recommended, ~25-30s):
+
+No visible browser window; fastest option and what CI uses.
 
 ```bash
 npm test
 ```
 
-### Run tests in headed (visible browser) mode:
+### Run tests in headed (visible browser) mode (~50-60s):
+
+Watch the browser drive OrangeHRM through all 8 steps live. Slower than headless because rendering a visible, composited window costs real time — this is expected, not a performance issue.
 
 ```bash
 npm run test:headed
@@ -185,15 +210,19 @@ npm run test:headed
 
 ### Run tests with interactive Playwright Inspector (debugging):
 
+Step through actions one at a time, inspect locators, and time-travel through the run.
+
 ```bash
 npm run test:debug
 ```
 
-### Open the HTML test report:
+### Run in Playwright's UI mode (visual timeline, watch mode):
 
 ```bash
-npm run test:report
+npx playwright test --ui
 ```
+
+Every mode prints structured, timestamped step logs (`[AutoTest] 🔹 STEP: ...`) to the console as the run progresses, so pass/fail status and API responses are visible without opening the report.
 
 ---
 
@@ -201,18 +230,21 @@ npm run test:report
 
 ### HTML Report
 
-Every execution generates a self-contained Playwright HTML report in `playwright-report/`:
+Every execution generates a self-contained Playwright HTML report in `playwright-report/`. After any test run, open it with:
 
 ```bash
-npx playwright show-report
+npm run test:report
 ```
 
-The report includes:
+This opens an interactive page in your browser at `http://localhost:9323`. Click into the test to expand:
 
-- Per-step timing and execution status
-- Full test log output with structured timestamps
-- Interactive DOM snapshots
-- Embedded video playback
+- Per-step timing and execution status (green ✓ per step, matching the 8 steps above)
+- Full structured console log output (`[AutoTest]` step markers, API request/response lines)
+- Interactive DOM snapshots at each action
+- Embedded video playback of the run
+- On failure only: screenshot at the point of failure and a downloadable trace (`npx playwright show-trace <path>`) for step-by-step replay with network and DOM inspection
+
+The report is self-contained under `playwright-report/` — it can be zipped and shared, or attached to a CI artifact, without re-running anything.
 
 ### Video Recording
 

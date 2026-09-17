@@ -4,7 +4,10 @@ import { DashboardPage } from '../pages/DashboardPage';
 import { PimPage } from '../pages/PimPage';
 import { AddEmployeePage } from '../pages/AddEmployeePage';
 import { EmployeeDetailsPage } from '../pages/EmployeeDetailsPage';
-import { EmployeeApiClient } from '../api/EmployeeApiClient';
+import {
+  EmployeeApiClient,
+  type CreateEmployeeResponse,
+} from '../api/EmployeeApiClient';
 import { createTestEmployee } from '../fixtures/testData';
 import { ENV, validateEnvironment } from '../config/environment';
 import { Logger } from '../utils/logger';
@@ -29,6 +32,7 @@ test.describe('Employee Lifecycle Management', () => {
   let apiClient: EmployeeApiClient;
   let employee: GeneratedEmployee;
   let apiEmployeeId: string;
+  let apiCreatedEmployee: CreateEmployeeResponse;
 
   test('should complete the full employee lifecycle: create, update, validate, delete, and logout', async ({
     page,
@@ -43,7 +47,11 @@ test.describe('Employee Lifecycle Management', () => {
     pimPage = new PimPage(page);
     addEmployeePage = new AddEmployeePage(page);
     employeeDetailsPage = new EmployeeDetailsPage(page);
-    apiClient = new EmployeeApiClient(request, ENV.API_BASE_URL);
+    apiClient = new EmployeeApiClient(
+      request,
+      ENV.API_BASE_URL,
+      ENV.REQRES_API_KEY
+    );
 
     // Generate unique test employee
     employee = createTestEmployee();
@@ -148,6 +156,7 @@ test.describe('Employee Lifecycle Management', () => {
       });
 
       apiEmployeeId = createResponse.id;
+      apiCreatedEmployee = createResponse;
 
       expect(
         createResponse.name,
@@ -204,20 +213,16 @@ test.describe('Employee Lifecycle Management', () => {
       // Validate that the API creation captured the correct employee name
       const fullName = `${employee.firstName} ${employee.lastName}`;
 
-      // The API POST response should have matched the UI employee data
-      // (already asserted in Step 4, but we re-validate the consistency)
-      const verifyCreate = await apiClient.createEmployee({
-        name: fullName,
-        job: employee.jobTitle,
-      });
-
+      // Reuses the employee created via API in Step 4 rather than issuing a
+      // second POST, so the suite stays within ReqRes's free-tier daily
+      // request budget (see README > API Integration for details).
       expect(
-        verifyCreate.name,
+        apiCreatedEmployee.name,
         'Cross-validation: API employee name should match UI employee name'
       ).toBe(fullName);
 
       expect(
-        verifyCreate.job,
+        apiCreatedEmployee.job,
         'Cross-validation: API employee job should match UI job title'
       ).toBe(employee.jobTitle);
 
@@ -225,9 +230,9 @@ test.describe('Employee Lifecycle Management', () => {
         limitation:
           'ReqRes is stateless; cross-validation demonstrates the pattern but cannot prove OrangeHRM DB state',
         uiEmployeeId: employee.employeeId,
-        apiEmployeeId: verifyCreate.id,
+        apiEmployeeId: apiCreatedEmployee.id,
         uiFullName: fullName,
-        apiFullName: verifyCreate.name,
+        apiFullName: apiCreatedEmployee.name,
       });
 
       Logger.success('UI/API cross-validation completed');

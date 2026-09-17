@@ -21,6 +21,9 @@ export const ENV = {
   /** API base URL for simulated API validation (ReqRes) */
   API_BASE_URL: process.env.API_BASE_URL || 'https://reqres.in/api',
 
+  /** ReqRes API key (raises the anonymous 40 req/day limit) */
+  REQRES_API_KEY: process.env.REQRES_API_KEY || '',
+
   /** OrangeHRM internal API base path */
   ORANGEHRM_API_PATH: '/web/index.php/api/v2',
 } as const;

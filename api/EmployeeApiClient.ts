@@ -1,4 +1,4 @@
-import { APIRequestContext, expect } from '@playwright/test';
+import { APIRequestContext, APIResponse, expect } from '@playwright/test';
 import { Logger } from '../utils/logger';
 
 // ─── Types ──────────────────────────────────────────────────
@@ -54,13 +54,54 @@ export interface UpdateEmployeeResponse {
  */
 export class EmployeeApiClient {
   private readonly baseUrl: string;
+  private readonly headers: Record<string, string>;
   private createdEmployeeId: string | null = null;
 
   constructor(
     private readonly request: APIRequestContext,
-    baseUrl: string
+    baseUrl: string,
+    apiKey?: string
   ) {
     this.baseUrl = baseUrl;
+    this.headers = apiKey ? { 'x-api-key': apiKey } : {};
+  }
+
+  /**
+   * Retry a request on 429 Too Many Requests, honoring Retry-After when
+   * present. ReqRes advertises Retry-After only for short-lived throttling;
+   * its anonymous 40 req/day cap omits it (reset is hours away), so retrying
+   * that case would just waste time — we fail fast instead and let the
+   * caller's assertion report it clearly.
+   */
+  private async withRetry(
+    sendRequest: () => Promise<APIResponse>,
+    maxRetries = 3
+  ): Promise<APIResponse> {
+    for (let attempt = 0; ; attempt++) {
+      const response = await sendRequest();
+
+      if (response.status() !== 429) {
+        const remaining = response.headers()['x-ratelimit-remaining'];
+        if (remaining !== undefined && parseInt(remaining, 10) <= 10) {
+          Logger.warn(
+            `ReqRes daily quota running low: ${remaining} request(s) remaining today. ` +
+              'Set REQRES_API_KEY in .env for a higher limit.'
+          );
+        }
+        return response;
+      }
+
+      const retryAfter = response.headers()['retry-after'];
+      if (!retryAfter || attempt >= maxRetries) {
+        return response;
+      }
+
+      const delayMs = parseInt(retryAfter, 10) * 1000;
+      Logger.warn(
+        `Rate limited (429) by API — retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
   }
 
   /**
@@ -70,7 +111,12 @@ export class EmployeeApiClient {
   async createEmployee(data: ApiEmployee): Promise<CreateEmployeeResponse> {
     Logger.api('POST', `${this.baseUrl}/users`);
 
-    const response = await this.request.post(`${this.baseUrl}/users`, { data });
+    const response = await this.withRetry(() =>
+      this.request.post(`${this.baseUrl}/users`, {
+        data,
+        headers: this.headers,
+      })
+    );
 
     expect(
       response.status(),
@@ -112,7 +158,11 @@ export class EmployeeApiClient {
     const queryId = parseInt(id) <= 12 ? id : '2';
     Logger.api('GET', `${this.baseUrl}/users/${queryId}`);
 
-    const response = await this.request.get(`${this.baseUrl}/users/${queryId}`);
+    const response = await this.withRetry(() =>
+      this.request.get(`${this.baseUrl}/users/${queryId}`, {
+        headers: this.headers,
+      })
+    );
 
     expect(
       response.status(),
@@ -152,9 +202,12 @@ export class EmployeeApiClient {
   ): Promise<UpdateEmployeeResponse> {
     Logger.api('PUT', `${this.baseUrl}/users/${id}`);
 
-    const response = await this.request.put(`${this.baseUrl}/users/${id}`, {
-      data,
-    });
+    const response = await this.withRetry(() =>
+      this.request.put(`${this.baseUrl}/users/${id}`, {
+        data,
+        headers: this.headers,
+      })
+    );
 
     expect(
       response.status(),
@@ -192,7 +245,11 @@ export class EmployeeApiClient {
   async deleteEmployee(id: string): Promise<void> {
     Logger.api('DELETE', `${this.baseUrl}/users/${id}`);
 
-    const response = await this.request.delete(`${this.baseUrl}/users/${id}`);
+    const response = await this.withRetry(() =>
+      this.request.delete(`${this.baseUrl}/users/${id}`, {
+        headers: this.headers,
+      })
+    );
 
     expect(
       response.status(),
@@ -218,8 +275,10 @@ export class EmployeeApiClient {
     const nonExistentId = '9999';
     Logger.api('GET', `${this.baseUrl}/users/${nonExistentId}`);
 
-    const response = await this.request.get(
-      `${this.baseUrl}/users/${nonExistentId}`
+    const response = await this.withRetry(() =>
+      this.request.get(`${this.baseUrl}/users/${nonExistentId}`, {
+        headers: this.headers,
+      })
     );
 
     expect(
@@ -239,7 +298,11 @@ export class EmployeeApiClient {
    */
   async employeeExists(id: string): Promise<boolean> {
     const queryId = parseInt(id) <= 12 ? id : '9999';
-    const response = await this.request.get(`${this.baseUrl}/users/${queryId}`);
+    const response = await this.withRetry(() =>
+      this.request.get(`${this.baseUrl}/users/${queryId}`, {
+        headers: this.headers,
+      })
+    );
     return response.status() === 200;
   }
 
