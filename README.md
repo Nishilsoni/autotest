@@ -47,6 +47,8 @@ This framework is designed according to industry best practices for scalability,
 │   └── profile-picture.jpg        # Fixture image for profile picture upload
 ├── config/
 │   └── environment.ts             # Strongly-typed environment configuration & validation
+├── demo/
+│   └── employee-lifecycle-test-run.webm  # Recording of a full passing run (viewable on GitHub)
 ├── fixtures/
 │   ├── employeeData.json          # Pre-configured baseline employee fixtures
 │   └── testData.ts                # Test data provider & collision-free factory
@@ -251,7 +253,11 @@ The report is self-contained under `playwright-report/` — it can be zipped and
 Video capture is configured to record every test execution (`video: 'on'` in `playwright.config.ts`):
 
 - Video recordings are saved in: `test-results/<test-run-directory>/video.webm`
-- Videos can be viewed in any standard media player or directly inside the Playwright HTML report.
+- Videos can be viewed in any standard media player, embedded in the Playwright HTML report, or directly in this repo (see below).
+
+### Demo Video
+
+A recording of a full passing run is committed at [`demo/employee-lifecycle-test-run.webm`](demo/employee-lifecycle-test-run.webm) — open it on GitHub to play it inline with the built-in video viewer, no download required.
 
 ---
 
